@@ -1,1 +1,1 @@
-# blog.steinfinsbo.no
+# Yet another developer blog

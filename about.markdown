@@ -4,15 +4,11 @@ title: About
 permalink: /about/
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+Christer is a norwegian developer residing in Oslo. 
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+He has the later years focused on .NET Development and is aspiring to become a software architect that bridges the gap between the business domain and the technical domain. Mainly as a backend developer he focuses on tactical domain driven design, while attempting to integrate a strategic prosses into the workforce.
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
-
-
-[jekyll-organization]: https://github.com/jekyll
+You can find him at the following spaces:
+- [LinkedIn](https://www.linkedin.com/in/christer-steinfinsbo/)
+- [GitHub](https://github.com/chris2402) 
+- [X](https://twitter.com/Steinfin)
