@@ -183,8 +183,39 @@ and alternative solutions might occur at a later point.
 The patterns are also just a starting point, and meant to be customized.
 
 ## Layering
+A common way to break down software. Eg. OSI-layer, and programming language to cpu binaries via compiler layer. 
+Layers should point in a direction, and be opaque - but this is no hard limit. 
+Advantages 
+- Isolate complexity
+- Substitutability 
+- Dependency minimisation
+- Standardization 
+- Reusability (opposite to substitute) 
+Disadvantages
+- Cross-cutting changes hit harder 
+- Performance hit 
+- Hard to find/decide what layers (and their responsability) 
+
 ### The Evolution of Layers in Enterprise Applications
+Prehistoric - no layers, just file manipulation 
+Client/Server architecture - initial UI/DB layers 
+Domain logic
+- logic in UI was hard to reuse and organize
+- logic in DB was awkward  
+due to limited structure mechanism
+and proprietary DB hard to move procedures
+> Q: What does he mean when all db's are proprietary, and how does that affect porting stored procedures? 
+
+Object oriented solves business layer; 3 layer 
+> C:(a bit hard to move to, as complexity sneaks up on you) 
+
+Layer vs Tier 
+Logical layers can run on same tier. Tiers are physical. 
+
 ### The Three Principal Layers
+Presentation, Domain & Data Source 
+Presentation handles user input, and show user output. User can be human, another process or another client/server. There is a rich client and a thin client (HTML) 
+
 ### Choosing Where to Run Your Layers
 
 ## Organizing Domain Logic
