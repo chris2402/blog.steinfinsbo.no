@@ -220,4 +220,34 @@ Presentation handles user input, and show user output. User can be human, anothe
 
 ## Organizing Domain Logic
 ### Making a Choice
+Fig 2.4 show abstract curves, effort of enhancement over complexity of domain 
+
+Starting with transaction script is easy 
+Domain model is hard 
+As complexity grows ease of maintainabillity and extendability decrease. 
+Steeper in transaction scripts 
+Slower in domain model 
+Table module is a middleway 
+
+But changing from one to the other is hard 
+>C: architectural design Patterns 
+But it makes little sense to move from domain model to transaction scripts. 
+
+Factors can lower alter the curves:
+- team members experience 
+- support for record sets in environment (table module) 
+
+Patterns is not mutually exclusive - they can be combined, or live temporarily together until refractor is complete. 
+
 ### Service Layer
+Splitting domain layer in two (table modules and domain model) 
+The API definition of the application, or facade to the domain model. 
+Suits to handle transactions and security
+>Q: Is this the same as application services in DDD?
+
+He mentions other extremes:
+- transactions scripts in service layer 
+- domain model entities equal to the DB tables
+A middle way would be controller entity (aka. Use case controller), inspired by Jacobson ET Al. 
+Fowler discourages this extra layer, and encourages to refractor to patterns that make logic reusable; such as domain model (all the way), or transactions scripts with row data gateway/active records. However, he uses it by need (not by an initial architectural decision), or at least have the thinest service layer one can
+
