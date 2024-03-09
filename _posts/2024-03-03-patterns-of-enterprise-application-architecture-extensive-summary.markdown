@@ -214,11 +214,103 @@ Logical layers can run on same tier. Tiers are physical.
 
 ### The Three Principal Layers
 Presentation, Domain & Data Source 
-Presentation handles user input, and show user output. User can be human, another process or another client/server. There is a rich client and a thin client (HTML) 
+Presentation 
+
+1. **Presentation**  
+Handles user input, and show user output. User can be human, another process or another client/server. There is a rich client and a thin client (HTML) 
+> C: Rich client is a Window/Swing/fat-client in the book; which probably translates much to mobile applications as well.
+
+2. **Data Source**  
+Communicating with other systems; RPC/REST. Infrastructure in "Clean Architecture". Mainly a DB.
+
+3. **Domain Logic**
+Define domain model; implementing business policy, domain and/or business calculations and validations.  
+
+Opaque layers; business hide all data source layer from presentation. Or less pure, when presentation access data source direct.
+
+Presentation Multipackage; 
+one package per Presentation Layers, REST API, Rich Client, Web GUI, CLI.
+
+Data Source Multipackage; 
+File data storage, Database data storage, REST API data storage.
+
+Domain Multipackage;
+>Q: Glorious Monolith? Vertical Slices?
+
+> C: Change in "Paradigm": Human to computer user
+
+User can be human or WS; WS -> Presentation API = Data Source API
+>C: Alistar Cockburn's Hexagonal Architecture  
+Ports and Adapter, Onion Architecture, Clean Architecture.
+
+Layers can be separated in the minimum level as subroutines, or as packages at maximum.
+>C: Fowler recommends this minimum
+
+Dependency is always "down"; presentation->logic->data
+
+Reckognize layers by "substitution thought-experiment"
+> What changes if I go from DB to files or services?  
+What changes if I present in CLI instead of GUI?
+
+A fine line between beeing dogmatic and overly precautious.
 
 ### Choosing Where to Run Your Layers
+What layers go on which tiers?
+
+Logic layer on any tier; host on both, only one or split, but decide wisely for security, maintainability, usability/responsiveness!
+
+>Q: Will he show Cross-cutting modules implementation?  
+
+Rich Client is more forgiving to host logic layer.
+Thin Client must host on server
+>C: But can contain a module for validation to improve responsiveness? E.g. jQuery validation prior to sending the form.
+
+B2C -> Generic Client & Responsiveness
+Hard to update client apps.
+>C: Thin clients/SPA is easier to update now adays
+
+A challenge to use multi-tier logic layer modules for server and client is it is more and harder to maintain and update.
+
+Splitting across is the client and server is hard; easier if it is a self-contained module that can run on both.
+>C: E.g. .NET Standard 2.0 / Core Class Libraries runs on Xamarin.Forms, MAUI, WinForms (Blazor?)
+
+More processing nodes increase complexity
+Use Remote Facade and/or DTO to communicate.
+
+Complexity Boosters:
+- Distribution
+- Explisitt Multithreading  
+- Paradigm Chasms
+- Multiplatform Development
+- Exreme Performance Requirements
 
 ## Organizing Domain Logic
+Describes first registry chapter: Transaction Script, Domain Model, Table Module
+
+- **Transaction Script**  
+A subroutine/Procedure does *one thing*. Subprocedures/Sub-transactions can be used; but that still should do one thing. Easy to understand, Compatible with diff. Data Source Layers (Row Data - & Table Data Gateway). Obvious transaction boundaries. Often code-duplication. 
+
+>C: This was used by Lyse; and it got very complex!
+
+
+- **Domain Model**  
+Object oriented friendly. Connects Domain Entities with their respective business/domain logic and constraints.
+Hard to learn, but easy to get into.
+
+>C: Look at pictures on figure 2.1 & 2.2 to show diff between transaction script and domain model. 
+
+>Q: Fig. 2.2 looks like it uses Strategy Pattern; How is the domain entity "Product" created with strategy pattern?
+
+>C: Aggregates in DDD
+
+>C: Fat model (not Anemic)
+
+- **Table Module**  
+Interface Contract to a data set, where each operation defines business logic defined for a row (or subset of rows?) on the data set.
+
+Middleway between Domain Model & Transaction Scripts;
+The Table Module represent an encapsulation of operation for a table, usually sequential operations as Transaction Scripts but isolated to a database table, view or query.
+
 ### Making a Choice
 Fig 2.4 show abstract curves, effort of enhancement over complexity of domain 
 
