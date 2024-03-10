@@ -27,8 +27,18 @@ Part 1 - The Narratives:
 2. [Organizing Domain Logic](#organizing-domain-logic)  
 2.1 [Making a Choice](#making-a-choice)  
 2.2 [Service Layer](#service-layer)  
-4. []()  
-5. []()  
+3. [Mapping to Relational Databases](#mapping-to-relational-databases)  
+3.1 [Architectural Patterns](#architectural-patterns)  
+3.2 [The Behavioral Problem](#the-behavioral-problem)  
+3.3 [Reading in Data](#reading-in-data)  
+3.4 [Structural Mapping Patterns](#structural-mapping-patterns)  
+  3.4.1 [Mapping Relationships](#mapping-relationships)  
+  3.4.2 [Inheritance](#inheritance)  
+3.5 [Building the Mapping](#building-the-mapping)  
+  3.5.1 [Double Mapping](#double-mapping)  
+3.6 [Using Metadata](#using-metadata)  
+3.7 [Database Connections](#database-connections)  
+3.8 [Some Miscellaneous Points](#some-miscellaneous-points)  
 
 Part 2 - The Patterns
 
@@ -348,3 +358,183 @@ He mentions other extremes:
 A middle way would be controller entity (aka. Use case controller), inspired by Jacobson ET Al. 
 Fowler discourages this extra layer, and encourages to refractor to patterns that make logic reusable; such as domain model (all the way), or transactions scripts with row data gateway/active records. However, he uses it by need (not by an initial architectural decision), or at least have the thinest service layer one can
 
+## Mapping to Relational Databases
+A dominant part of Data Layer in most IS is communicating wit a database - often SQL.
+
+### Architectural Patterns
+Choice that is very influencial for the design, and difficul to refactor.  
+Strongly affected by design of domain logic.  
+
+Mitigates "awkward" interactions with DB.  
+Separate SQL from Domain logic.  
+>C: Database administrators use SQL for optimization.
+
+A class per SQL Table: *Gateway*  
+- Table Data Gateway  
+  - Nice support Record Set
+  - Fits Table Module
+  - Can encapsulate Stored Procedures
+  - 
+- Row Data Gateway  
+
+Domain Model;
+- Not well suited for Table Data Gateway, rather use Row Data Gateway or Active Record.  
+- Mismatch Domain Model and Database Schema; use Data Mapper  
+
+The patterns are not mutually exclusive; Data Mapper can use a Gateway or Active Record to fetch data.  
+The Data Mapper insulates the Business Layer from the Database
+>Q: Is Data Mapper a Repository implementation in DDD?
+
+The following works on Table, View, Stored Procedures or other Queries. Atleast for reading.  
+
+Alternatives; 
+- Object-Oriented Database Management System (OODBMS)  
+- Object-Relational Mapping (ORM)
+
+## The Behavioral Problem
+ORM deals with Structural Problems.  
+Reading, Writing, Transactions, Rollback, etc is Behavioral.  
+Extension of this, tracking changes, Consistency in Concurrent systems, Entity/Identity tracking, etc (also behavioral).  
+
+Unit of Work tracks transactions and consistency.  
+Identity Map tracks fetched entities (and caches).  
+Lazy Loading defers fetching referenced entities.  
+>Q: How does Lazy Loading work in async programming?
+
+## Reading in Data
+Finders are methods that perform SQL Queries.  
+Add finders in the same interface that interacts with one table.  
+
+Row-based classes can use static finders, but these are hard to test.
+>Q: What does he mean by Row-based?  
+
+Lookout for reading objects that already exist in memory (and might be manipulated).  
+Read initially in procedures.
+
+Typical Performance Issues;
+- Repeated query on a table  
+  - Fetch all at once
+  - Use Joins 
+  >Q: Or multiple queries per DB call?
+- Poorly designed Schema
+  - Cooperate with DBA; analyse the SQL the queries
+  - Profile & Tune
+
+## Structural Mapping Patterns
+Following patterns are not used in Table Data Gateway.  
+Data Mapper might need them all.
+
+### Mapping Relationships
+RDBMS vs Object Oriented.
+Linking; Primary/Foreign Keys vs Memory Reference.  
+Collections; parent/owner key vs List/Array.  
+Ordering; Prder the SQL query or use unordered sets for OO collections
+
+Handle representations with an Identity Field; use the field to lookup in Foreign Key Identity Map. Cache Miss triggers Lazy Load or SQL Query.
+>Q: Not sure I understand the previous statement.  
+It might be that:  
+- Many-to-One use Identity Map
+- One-to-Many use Foreign Key Map
+
+To mitigate complexity, meta-data mapping can be used.
+>C: I believe modern ORM solves these problems, and thus no need for meta-data mapping.
+
+Referential Integrity; handled in SQL
+>C: I struggle to see the problem if one uses one transaction per procedure?
+
+Embed Value Objects (does not need it's own table) into the table of the referring classes.
+- Adding all the columns from the Value Object properties
+- Store the object as a Serialized Large Object in a single column
+>C: Have witnessed this in previous probject; JSON from Service was added as JSON text
+
+LOBs are nearly impossible to query on (BLOBs more than SLOBs).
+
+### Inheritance
+No standard way for handling inheritance in relational databases.  
+There are three main strategies, and they are not mutually exclusive
+- Single Table Inheritance  
+One large table for the whole hierarchy  
+- Concrete Table Inheritance  
+One table per concrete class in the hierarcy  
+- Class Table Inheritance  
+One table per class/abstract class/interface in the hierarchy  
+
+The trade-offs are:
+- Data redundancy and space-waste
+- Access performance hit  
+- Brittleness for changes 
+- Data lock contention  
+- Referential Integrity
+- 
+
+Fowler encourages cooperation with DBA's to evaluate which strategy suites best for a given situation, and as a rule of thumb he himselv usually starts with a Single Table Inheritance strategy due to the simplicity.  
+
+>C: I wanted to Class Table Inheritance for `Billing/Order` in previous work, where the billing was supposed to be handled by two different external payment services. A base class would be the domain entity, and two sub-classes would implement the integration to their respective external payment service.  
+
+## Building the Mapping
+Three usual situations when mapping object model to the database:
+- No defined schema; build it yourself
+- Strict existing schema; reverse engineer and adapt
+- Open existing schema; reverse engineer and propose changes
+
+Simplest case:
+- Low-moderate complexity
+- Build schema yourself
+Build proper schemas and use Transaction Scripts or Table Module for domain logic. Row or Table Gateway for SQL connection (or ORM).
+
+Pitfall when using Domain Model;  
+- Design domain model in isolation from database.  
+If it is a mismatch, use Data Mapper (even if complex). Isomorphic models schema design to object model; use Active Record.  
+- Domain Model changes must be integrated and tested often to database mapping  
+Changes can have large performance hit, and be hard to refactor.
+
+Existing Schemas use same steps when deciding;
+- High Complexity -> Domain Model  
+Data Mapper is often used as it is usually a mismatch between domain model and schema  
+- Low/Moderate Complexity -> Row/Table Data Gateway mimics database
+
+### Double Mapping
+Multiple Data Sources, one can use Multiple Mapping Layers.  
+Consider two-step mapping scheme if the data sources are similar, but again extensively different from domain model; 
+1. Convert data from Domain to logical data store  
+The logical data store maximizes the similarities to the data sources
+2. Convert logical data source to the concrete data source models
+
+## Using Metadata
+Code generation or Reflection based on Metadata-files to describe the mappings. 
+>C: I assume this is similar to EF-Attributes? JSON/XML Serialization Attributes?
+This avoids much boilerplate/hand-written mapping.
+
+This approach suites well with Query Object pattern, which abstracts out SQL.  
+Fowler extends this by claiming this suites well with Repository pattern.
+
+## Database Connections
+Database Connection Management; when to open, when to close, and how to optimize them.
+Connections can be viewed as resources just like memory.  
+
+Record Sets can be "Disconnected" or "Connected".  
+Disconnected Record Set does not need the same connection for reading as writing.  
+A connected does.  
+
+Transactions must have an open connection through-out it's lifetime.
+
+Connection pooling can optimize usage, as establishing a connection can be expensive. Use a Connection Manager!
+
+Releasing a connection can be done via a registry if it is not closed within the same scope where it was captured.
+
+One can auto-close connection via the Garbage Collector; A procedural Transaction Scope or similar.  
+
+Transactions can handle it's own connection; and this suites well with Unit of Work pattern.
+
+Non-transactional request; reading data that is not going to be mutated, one can do it in a fresh connection - let pooling handle the short-lived connection.
+>Q: Not sure I understood this statment.
+
+Disconnected Record Sets that does not use transaction, and a potential different connection after manipulation, must handle concurency problematique.
+
+## Some Miscellaneous Points 
+Named Column Indices may be slower, but positional indicies may fail if the schema changes and the SQL Query uses asterisk (*) for the SELECT clause.
+
+Precompiling SQL can be an advantage.
+>C: EF Does not, but uses different methods to optimize
+
+Multiple Queries per database call
