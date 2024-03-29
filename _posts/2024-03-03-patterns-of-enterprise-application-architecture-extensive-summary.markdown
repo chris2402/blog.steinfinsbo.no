@@ -39,7 +39,23 @@ Part 1 - The Narratives:
 3.6 [Using Metadata](#using-metadata)  
 3.7 [Database Connections](#database-connections)  
 3.8 [Some Miscellaneous Points](#some-miscellaneous-points)  
-
+4. [Web Presentation](#web-presentation)
+4.1 [View Patterns](#view-patterns)
+4.2 [Input Controller Patterns](#input-controller-patterns)
+5. [Concurrency](#concurrency)
+5.1 [Concurrency Problems](#concurrency-problems)
+5.2 [Execution Contexts](#execution-contexts)
+5.3 [Isolation and Immutabillity](#isolation-and-immutabillity)
+5.4 [Optimistic and Pessimistic Concurrency Control](#optimistic-and-pessimistic-concurrency-control)
+5.4.1 [Preventing Inconsistent Reads](#preventing-inconsistent-reads)
+5.4.2 [Deadlocks](#deadlocks)
+5.5 [Transactions](#transactions)
+5.6 [ACID](#acid)
+5.6.1 [Transactional Resources](#transactional-resources)
+5.6.2 [Reducing Transaction Isolation for Liveness](#reducing-transaction-isolation-for-liveness)
+5.6.3 [Business and System Transactions](#business-and-system-transactions)
+5.7 [Patterns for Offline Concurrency Control](#patterns-for-offline-concurrency-control)
+5.8 [Application Server Concurrency](#application-server-concurrency)
 Part 2 - The Patterns
 
 10. [Domain Logic Patterns](#domain-logic-patterns)  
@@ -538,3 +554,62 @@ Precompiling SQL can be an advantage.
 >C: EF Does not, but uses different methods to optimize
 
 Multiple Queries per database call
+
+
+# Web Presentation
+Can be many "programs" per web-server
+These web-programs are mainly architected: Scripts or Pages
+Scripts: Functions that handle HTTP-Request messages and create HTTP-Response messages
+- Handles request well
+Pages: Simplification for writing HTML, that can interpolate data from the context
+- Handles response well
+Can be combined for optimal segregation
+[Razor Pages: Code-behind are scripts]
+**MVC**
+- Controller (Script) handles input, View (Pages) handles response
+[C: Martin calls it Input Controller in MVC to specify]
+Input Controller recieves request, and delegates to *model*, which is any form of application layer. Perhaps a **Application Controller** 
+
+## View Patterns
+Template View: JSP, aspx, Razor-Template
+Transform View: XSLT or [JSLT](https://github.com/schibsted/jslt) (SCHIBSTED!)
+
+Two-step view: Components and/or Layout pages for reuse?
+
+## Input Controller Patterns
+Input controller can be separated per page, Page Controller
+[Q: 1 controller per Vertical Slice?]
+
+Input controllers handle HTTP Request & Decide what do to with them
+[C: Handling HTTP Request is more pushed into the framework now; Middleware and Filters in ASP.NET (Routing & Model Binding assisting)]
+
+# Concurrency
+Hard to reveal concurrent problems and hard to test for.
+Enterprise Apps have a lot of concurrency; use transactions to mitigate.
+Offline concurrency; occurs over many transactions and is thus not handled with one transaction
+Concurrency in application servers running paralell threads
+
+## Concurrency Problems
+Control mechanism for Concurrency can create new problems on their own.
+**Lost Updates**: When two agents read out same version and manipulate them concurrently. The last to save wins
+[C: Race condition]
+**Inconsisten Read**: When one agent is aggregating from a dataset by sequential reading, and middle of process the dataset is updated - the aggregation may be incorrect.
+
+Both problems cause problems of *correctness* (safety)
+Correctness vs *Liveness*
+
+Control Mechanisms mitigate the problems, but often cause problems of their own: *No free lunch*
+
+## Execution Contexts
+
+## Isolation and Immutabillity
+## Optimistic and Pessimistic Concurrency Control
+### Preventing Inconsistent Reads
+### Deadlocks
+## Transactions
+## ACID
+### Transactional Resources
+### Reducing Transaction Isolation for Liveness
+### Business and System Transactions
+## Patterns for Offline Concurrency Control
+## Application Server Concurrency
