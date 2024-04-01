@@ -601,15 +601,186 @@ Correctness vs *Liveness*
 Control Mechanisms mitigate the problems, but often cause problems of their own: *No free lunch*
 
 ## Execution Contexts
+No standard definition;
+- **Request**:  
+A single outside world call into the software, that may or may not return a result.
+Cancellable or run in parallell from client
+- **Session**:
+A long-running interaction between a client and a server, in one or multiple requests.  
+(HTTP Session Database Sessions)
+
+**Process** & **Threads**
+Isolation vs Light-weight & Resource conservative
+
+**Isolated Threads** (Non-shared memory)  
+[C: Dart & JavaScript (?)]  
+[Q: Can this be done in C#?]
+
+**Transactions**
 
 ## Isolation and Immutabillity
+Solution to parallell agents in a system;  
+- Isolation of memory for an agent  
+Good design to find such zones in a system  
+- Immutability of data shared between agents, allowing only reads
+
 ## Optimistic and Pessimistic Concurrency Control
+- Optimistic locking;  
+Conflict prevention on committing changes.  
+More liveness, but harder to resolve.
+- Pessimistic locking;  
+Serialized editing.
+
+## Optimistic and Pessimistic Concurrency Control
+Shared mutable data can be solved with mainly 2 types of locking: 
+1. Optimistic locking requires conflict detection 
+    - Increases Liveness 
+    - Reduces Security (Increased complexity as clients may need to resolve conflicts)
+2. Pessimistic 
+    - Reduces Concurency/Liveness
+    - Increases Safety 
+
+Factors of Decision for Pessimistic vs Optimistic locking
+- Frequency of Concurrency/Conflicts
+- Severity of Conflicts
+[C: Complexity in automatic conflict resolving?]
+
 ### Preventing Inconsistent Reads
+**Pessimistic Locks**: Read (Shared)-  & Write (Exclusive) Lock
+> IF (1 =< Shared) THEN Exclusive = 0  || IF 1 == Exclusive THEN Shared = 0 
+
+**Optimistic Locks**: Version Marker/Id comparison
+
+Inconsistent Reads check all bits
+[C: Git compares SHA256-hash of content]
+Separate used data from read data
+[Q: Domain specific need to analyse what data needs to be "fresh"?]
+
+**Temporal Reads**; Return a state based on a timestamp or lable  
+[C: E.G. commit SHA]  
+[Q: Event Sourcing?]
+
 ### Deadlocks
+Pesimistic locks with agents locking each their own resource.
+To make progress they all need to lock eachothers resource.
+
+Victimize - release his locks and undo his changes
+Timeouts - maks amount of CPU cycles to lock (might victimize someone who is not in deadlock)
+Detections and timeouts undo deadlocks on/after occurrence. 
+
+Prevention schemes:
+- Force agent to lock all resources prior to transaction
+- Force resource locking in specific order (e.g. alphabetical)
+- Victimize an agent who attempts to aquire a lock for a locked resource
+Conservative approches use multiple schemes
+
+Hard to identify all scenarios - Enterprise apps can use simple and conservative approcahes to avoid falling in a deadlock.
+
 ## Transactions
+Primary tool for handling concurrency
+Sequence of work, well defined start and endpionts 
+Resources are in consistent state prior and posterior to transaction
+[Q: How does this relate to Design by Contract / Contract Driven Design? Priori, Invariants & Posteriori]
+
+All-or-nothing; Atomic
+
 ## ACID
+- Atomicity  
+All steps happen, or none happens. Rollback or commit!
+- Consistency  
+Resources are consisten, non-corrupt at start and end of transcation
+- Isolation  
+Visibility of transaction integrity to other transactions
+[Q: I struggle to understand this property]
+- Durability  
+Changes are permanent after end of transaction
+
 ### Transactional Resources
+To increase throughput, keep transactions small
+
+Transactions spanning multiple request: **Long Transactions**
+[Q: Saga?E.g. MassTransit]
+
+**Request Transactions**
+[C: ASP.NET Scoped Services]
+
+**Late Transactions**; Open only when need to write to increase liveness. 
+No concurrency control - only on heavy contention or business transaction span multiple transactions.
+[Q: Isn't this common when working in Web? Editing a DTO in frontend does not hold a transaction in backend]
+
+Awareness of what is locked - table rows can lock escalate, locking whole table. 
+Hence no Layer Supertype.
+
 ### Reducing Transaction Isolation for Liveness
+A lift where Full protection of transaction is top, and less protection as we go down.
+These isolation levels introduce one and one Inconsistent Read Errors (Phantom, Unrepeatable Read, Dirty Read)
+[C: Isolation I in ACID]
+
+- **Serializable Transactions**  
+A concurrent transaction ends up with same result as running before or after to concurrent agents' transactions.
+The transaction has a isolated state.
+- **Repeatable Read**  
+Introducing phantoms. Phantoms are added to collections and other agents see some (inserted) of them
+- **Read committed**  
+Introducing unrepeatable reads, where a read of a dataset which is updated with a commit cannot be repeated.
+- **Read uncommitted** 
+Introduces dirty reads, where a read fetches uncommitted data from other agents transactions.
+May read data that is never committed to DB!
+
 ### Business and System Transactions
+Business transactions may span user interactions, or atleast multiple requests.
+A long ongoing system transaction in database transforms it into a bottleneck, rendering the application unscalable.
+
+**Offline Concurrency** leaves concurrency handling to architect/developer.
+
+Tracking change set prior to business transaction commit:
+- Domain Model + Unit of Work
+- Transaction Script + Manual tracking
+
+Atomicity and Durability is enforced by using a system transaction on business transaction commit.
+Consistency is tracked either in domain model, application layer or in DB constraints.
+[C: Aggregates in Domain Driven Design track invariants and methods + Domain Services should enforce prior and posterior contracts]
+Isolation is hard to enforce, and would perhaps lead to inconsistent states (if not enforced in DB).
+
+Applications responsibility for supporting concistency within:
+- Single transaction: enforce all business rules and policies
+- Session (multiple transactions): enforce no overstepping between different agents
+
+Consistency cannot be guaranteed over several systems
+[C: Eventual Consistency relation]
+
+Business transactions and Sessions are closely related, but:
+- One user session can be multiple business transactions
+- One business transaction can span multiple user sessions
+
 ## Patterns for Offline Concurrency Control
+Use transactions systems capabilities for concurency control as much as possible.
+Followin patterns are last resort solutions:
+- Optimistic Offline Lock  
+May be painful for user if in conflict
+- Pessimistic Offline Lock  
+Reducess Liveness
+- Coarse-Grained Lock  
+Group of objects are locked
+- Implicitt Locks  
+To avoid clients to have to manage the locks
+
 ## Application Server Concurrency
+
+Avoid explisitt multithreaded programming; locking and synchronization
+
+**Process-per-session**; process is expensive, so many users result in resource expensive web-server
+**Process-per-request** pooling; remember to release resources/reset context at the end of the request
+**Thread-per-request** pooling; dangers with shared memory/data
+
+Robustness in Process-per-session.
+
+Isolated areas in Threads.
+[C: AsyncLocal<T> & ThreadLocal<T> in C#]
+[Q: Can AsyncLocal<T> & ThreadLocal<T> be static?]
+
+Favor new objects over pooling
+- It is not that expensive (usually)
+
+Singletons into a Registry that wraps thread-specific storage
+- IE. Registry for a database-connections pool
